@@ -1,0 +1,408 @@
+
+.\mongosh "mongodb+srv://cluster0.qdr1m.mongodb.net/DatabaseName" --username username
+
+
+
+
+mongodb+srv://m001-student:m001-mongodb-basics@cluster0.qdr1m.mongodb.net/test
+
+
+//********************* IMPORTING & EXPORTING *************************//
+
+
+// FOR BSON
+mongodump --uri "mongodb+srv://m001-student:m001-student-basics@cluster0.qdr1m.mongodb.net/sample_supplies"
+mongodump --uri "mongodb+srv://<your username>:<your password>@<your cluster>.mongodb.net/sample_supplies"
+mongorestore --uri "mongodb+srv://<your username>:<your password>@<your cluster>.mongodb.net/sample_supplies"  --drop dump
+
+//FOR JSON
+mongoexport --uri="mongodb+srv://<your username>:<your password>@<your cluster>.mongodb.net/sample_supplies" --collection=sales --out=sales.json
+mongoimport --uri="mongodb+srv://<your username>:<your password>@<your cluster>.mongodb.net/sample_supplies" --drop sales.json
+
+
+//********************* IMPORTING & EXPORTING *************************//
+
+//***************** BASIC Operations******************//
+mongo "mongodb+srv://cluster0.qdr1m.mongodb.net/DatabaseName" --username m001-student --password m001-mongodb-basics
+
+show dbs
+
+use sample_training
+
+show collections
+
+db.zips.find({"state": "NY"})
+db.zips.find({"state": "NY"}).count()
+
+db.zips.find({"state": "NY", "city": "ALBANY"})
+
+db.zips.find({"state": "NY", "city": "ALBANY"}).pretty()
+
+
+db.inspections.findOne();
+
+
+// Insert a doc
+db.inspections.insert({
+      "id" : "10021-2015-ENFO",
+      "certificate_number" : 9278806,
+      "business_name" : "ATLIXCO DELI GROCERY INC.",
+      "date" : "Feb 20 2015",
+      "result" : "No Violation Issued",
+      "sector" : "Cigarette Retail Dealer - 127",
+      "address" : {
+              "city" : "RIDGEWOOD",
+              "zip" : 11385,
+              "street" : "MENAHAN ST",
+              "number" : 1712
+         }
+  })
+
+// insert multiple docs
+ db.inspections.insert([
+ {_id:1,"test":1},
+ {_id:2,"test":1},
+ {_id:3,"test":1},
+ {_id:1,"test":1}]);
+
+
+// Will not insert both as first document fails due to duplicate key
+
+db.inspections.insert([
+ {_id:1,"test":1},
+ {_id:4,"test":1}]);
+
+// ordered false will let insert the second doc
+
+db.inspections.insert([
+ {_id:1,"test":1},
+ {_id:4,"test":4}],{"ordered":false});
+
+
+//update doc -INC , SET , PUSH
+
+db.zips.updateMany({"city":"HUDSON"},{"$inc":{"pop":100}});
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 16,
+  modifiedCount: 16,
+  upsertedCount: 0
+}
+
+db.zips.updateMany({"zip":"10004"},{"$set":{"pop":4000}});
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+db.grades.findOne({"class_id":339});
+{
+  _id: ObjectId("56d5f7eb604eb380b0d8d8ce"),
+  student_id: 0,
+  scores: [
+    { type: 'exam', score: 78.40446309504266 },
+    { type: 'quiz', score: 73.36224783231339 },
+    { type: 'homework', score: 46.980982486720535 },
+    { type: 'homework', score: 76.67556138656222 }
+  ],
+  class_id: 339
+}
+
+db.grades.update({"class_id":339},{"$push":{"scores":{"type":"extra", "score":100}}})
+db.grades.findOne({"class_id":339});
+{
+  _id: ObjectId("56d5f7eb604eb380b0d8d8ce"),
+  student_id: 0,
+  scores: [
+    { type: 'exam', score: 78.40446309504266 },
+    { type: 'quiz', score: 73.36224783231339 },
+    { type: 'homework', score: 46.980982486720535 },
+    { type: 'homework', score: 76.67556138656222 },
+    { type: 'extra', score: 100 }
+  ],
+  class_id: 339
+}
+
+
+
+
+
+//deleteMany, deleteOne, drop
+db.sample.deleteMany({name:"sairam"});
+db.sample.drop();
+
+
+db.zips.updateMany({"state":"NY","city":"ALBANY"},{"$set":{"capital?":true}})
+db.zips.updateMany({"state":"NY","city":"NEW YORK"},{"$set":{"capital?":false}})
+//***************** BASIC Operations******************//
+
+
+
+//***********************COMPARISION  -  LOGICL OPERATOERS*************************//
+
+
+// $lt, $lte, $eq, $gt, $gte, $ne
+db.collections.finsd{field:{"$operator":value}}
+db.trips.find({ "tripduration": { "$lte" : 70 },
+                "usertype": { "$ne": "Subscriber" } }).pretty()
+
+
+
+// $and, $or, $nor, $not
+
+db.collection.find({"$oprator":[{clause1},{clause2}]})
+//$not is different
+db.collection.find({"$not":{clause}})
+
+db.routes.find({ "$and": [ { "$or" :[ { "dst_airport": "KZN" },
+                                    { "src_airport": "KZN" }
+                                  ] },
+                          { "$or" :[ { "airplane": "CR2" },
+                                     { "airplane": "A81" } ] }
+                         ]}).pretty()
+
+db.zips.find({"$and":[{"pop":{"$lt":1000000}},{"pop":{"$gt":5000}}]}).count()
+
+db.companies.find(
+    {
+    "$or":
+        [
+            {
+            "$and":
+                [
+                    {"founded_year":2004},
+                    {
+                        "$or":
+                        [
+                            {"category_code":"social"},
+                            {"category_code":"web"}
+                        ]
+                    }
+                ]
+            },
+            {
+            "$and":
+                [
+                {"founded_month":10},
+                {
+                     "$or":
+                     [
+                         {"category_code":"social"},
+                         {"category_code":"web"}
+                     ]
+                }
+                ]
+            }
+        ]
+    }
+)
+
+//***********************COMPARISION  -  LOGICL OPERATOERS*************************//
+
+//***********************   Expressive Query Operator ************************//
+
+
+// use this if you are comparing the field in the same document
+
+db.trips.find({ "$expr": { "$eq": [ "$end station id", "$start station id"] }}).count()
+
+db.trips.find({ "$expr": { "$and": [ { "$gt": [ "$tripduration", 1200 ]},
+                         { "$eq": [ "$end station id", "$start station id" ]}
+                       ]}}).count()
+
+
+db.companies.find({"$expr":{"$eq":["$permalink","$twitter_username"]}}).count()
+
+
+//***********************   Expressive Query Operator ************************//
+
+//******************************* Arrays **************************************//
+
+// a filed in array search , gets documents where amenities array consistes shampoo
+db.listingsAndReviews.find({"amenities":"shampoo"})
+//db.listingsAndReviews.find({"amenities":["shampoo"]}) will work only if amenities is an array of one element with "shampoo"
+
+// search in array, sequence matters and it must contain all elements
+//$all will help to search if contains with out worring aboiut size, elements are case sensitive
+
+db.listingsAndReviews.find({"amenities":{"$all":["TV","Cable TV","Washer","Iron"]}})
+
+//$size - serch with size
+db.listingsAndReviews.find({"amenities":{"$size":20,"$all":["TV","Cable TV","Washer","Iron"]}})
+db.listingsAndReviews.find({"amenities":{"$size":20}})
+
+//{"name":1,"accommodates":1} is a projection to include only these fielsd, use 0 for exclusions
+db.listingsAndReviews.find({"accommodates":{"$gt":6},"reviews":{"$size":50}},{"name":1,"accommodates":1})
+db.listingsAndReviews.find({"property_type":"House","amenities":"Changing table"}).count()
+
+//$elemMatch - matches the document in array alliements  - use in projectiopn for search
+db.grades.find({ "class_id": 431 },
+               { "scores": { "$elemMatch": { "score": { "$gt": 85 } } }
+             })
+
+db.grades.find({},{"scores":{"$elemMatch":{"score":{"$gt":80}}}})
+
+
+//$elemMatch can be used in search in array documents
+db.grades.find({ "scores": { "$elemMatch": { "type": "extra credit" } } })
+db.grades.find({"scores":{"$elemMatch":{"score":{"$gt":80}}}})
+
+
+db.grades.find({ "class_id": 431 ,
+                "scores": { "$elemMatch": { "score": { "$gt": 85 } } }
+             })
+
+db.companies.find({},{"offices":{"$elemMatcg":{"city": "Seattle"}}})
+
+
+//******************************* Arrays **************************************//
+
+//******************************* Sub - Documents******************************//
+
+// . operator can allow us to refer nested doc fields
+db.trips.find({"start station location.type":"Point"})
+
+// if the docs in array use the index number to ref
+
+db.companies.find({"relationships.0.person.first_name":"Jim"},{"relationships":1})
+
+db.companies.find({ "relationships.0.person.first_name": "Mark",
+                    "relationships.0.title": { "$regex": "CEO" } },
+                  { "name": 1 }).count()
+
+
+db.companies.find({ "relationships":
+                      {"$elemMatch":{"is_past":true}}}).count()
+
+db.companies.find({ "relationships":
+                      {"$elemMatch":{"is_past":true,"person.first_name":"Mark"}}}).count()
+
+
+db.trips.find({'start station location.coordinates.0':{"$lt":-74}})
+db.trips.find({"start station location.coordinates.0":{"$lt":-74}}).count()
+db.inspections.find({"address.city":"NEW YORK"})
+
+
+
+
+
+//******************************* Sub - Documents******************************//
+
+//*******************************Aggregation Framework*************************//
+
+db.listingsAndReviews.find({ "amenities": "Wifi" },
+                           { "price": 1, "address": 1, "_id": 0 }).pretty()
+
+// A collection gets through sequence of pipes to get the result. For instance following stages
+// Collection ->   $project -> $match -> $group -> $sort -> result
+
+db.listingsAndReviews.aggregate(
+{ "$match":{"amenities": "Wifi" }},
+{ "$project":{"price": 1, "address": 1, "_id": 0}}
+)
+
+
+db.listingsAndReviews.findOne({ },{ "address": 1, "_id": 0 })
+// group by country - remember $ has to be used when refer field values eg:$address.country
+
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":"$address.country"}}
+])
+
+// group by country and count docs in each group
+
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":"$address.country","count":{"$sum":1}}}
+])
+
+db.listingsAndReviews.aggregate([{"$project":{"room_type":1}},{"$group":{"_id":"$room_type","count":{"$sum":1}}}])
+
+
+// $sort , $limit , $skip , $out, meaningful grouping/ compount grouping , $match
+
+
+// meaningful _id for $group
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":{"country":"$address.country"},"count":{"$sum":1}}}
+])
+
+// compound1 _id
+
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":{"country":"$address.country","market":"$address.market"},"count":{"$sum":1}}}
+])
+
+db.zips.find()
+db.zips.find().sort({"city":1})
+db.zips.find().sort({"city":1,"pop":"-1"})
+db.zips.find().sort({"city":1}).limit(12)
+db.zips.find().sort({"city":1}).limit(12).skip(2)
+
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":{"country":"$address.country"},"count":{"$sum":1}}},
+{"$sort":{"_id":1}},
+{"$limit":7},
+{"$skip":2}
+])
+
+//look at the order of skip and Limit
+db.listingsAndReviews.aggregate([
+{"$project":{"address":1,"_id":0}},
+{"$group":{"_id":{"country":"$address.country"},"count":{"$sum":1}}},
+{"$sort":{"_id":1}},
+{"$skip":2},
+{"$limit":7}
+])
+
+//double grouping
+db.movies.aggregate([{"$group":{"_id":{"area":"$area","director":"$director"},"avg_collection":{"$avg":"$collection"}}},
+                     {"$group":{"_id":{"director":"$_id.director"},"collctions":{"$avg":"$avg_collection"}}}])
+
+db.movies.aggregate([{"$group":{"_id":{director:"$director","area":"$area"},
+    "average_by_area":{"$avg":"$collection"}}},
+    {"$group":{"_id":"$_id.director",average:{"$avg":"$average_by_area"}}}])
+
+//$match
+
+- db.movies.aggregate([{"$match":{"name":"n%"}}]) verify
+db.movies.aggregate([{"$match":{"name":"Temper"}}])
+
+//$UNWIND
+//{"name":"Janatha Garage","year":2016 ,"director":"Koratala Siva",
+  	 "producer": "Mythry movie makers","area":"andhra","collection":8000,
+  	 "tags":["action","drama"]},
+// find a move by genre
+
+db.movies.aggregate([{"$unwind":"$tags"},{"$group":{"_id":{"Genre":"$tags"},"sum":{"$sum":1}}}]);
+
+
+
+//*******************************Aggregation Framework*************************//
+
+mongodb+srv://m220student:m220password@cluster0.m7sjn.mongodb.net/test`
+
+
+
+b.movies.aggregate([
+        { "$match" : { "countries" : "Portugal" } },
+        { "$facet" : {
+            "cast_members" : [{ "$unwind" : "$cast" }, { "$group" : { "_id" : "", "cast_list" : { "$addToSet" : "$cast" } } }],
+            "genres_count" : [{ "$unwind" : "$genres" }, { "$sortByCount" : "$genres" }],
+            "year_bucket" : [{ "$bucketAuto" : { "groupBy" : "$year", "buckets" : 10 } }]
+            }
+        }
+      ])
+
+
+db.movies.aggregate([
+        { "$match" : { "countries" : "Portugal" } },
+       { "$unwind" : "$cast" }, { "$group" : { "_id" : "", "cast_list" : { "$addToSet" : "$cast" } } }
+      ])
